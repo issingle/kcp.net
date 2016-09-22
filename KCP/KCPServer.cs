@@ -26,7 +26,7 @@ namespace KCP.Server {
         }
         private string m_host;
         private ushort m_port;
-        private Socket m_UdpServer;
+        private Socket m_UdpSocket;
 
         internal Stopwatch m_watch;
         private SwitchQueue<SocketAsyncEventArgs> mRecvQueue = new SwitchQueue<SocketAsyncEventArgs>(128);
@@ -71,14 +71,14 @@ namespace KCP.Server {
         }
         public void Start() {
             m_watch = Stopwatch.StartNew();
-            m_UdpServer = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            m_UdpServer.Bind(new IPEndPoint(IPAddress.Parse(m_host), m_port));
+            m_UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            m_UdpSocket.Bind(new IPEndPoint(IPAddress.Parse(m_host), m_port));
             var e = PopSAE();
-            m_UdpServer.ReceiveFromAsync(e);
+            m_UdpSocket.ReceiveFromAsync(e);
         }
 
         private void StartRecv() {
-            m_UdpServer.ReceiveFromAsync(PopSAE());
+            m_UdpSocket.ReceiveFromAsync(PopSAE());
         }
 
         private void E_Completed(object sender, SocketAsyncEventArgs e) {
@@ -173,7 +173,7 @@ namespace KCP.Server {
                             continue;
                         }
                         c = AddSession(e.RemoteEndPoint, index);
-                        c.m_UdpServer = this;
+                        c.m_KCPServer = this;
                         c.m_LastRecvTimestamp = m_watch.Elapsed;
                         OnNewClientSession(c, e.Buffer, e.Offset, e.BytesTransferred);
 #if DEV
@@ -192,7 +192,7 @@ namespace KCP.Server {
                     c.Status = ClientSessionStatus.Connected;
                     //回发握手请求
                     if(UdpLibConfig.ServerSendAsync) {
-                        m_UdpServer.SendToAsync(e);
+                        m_UdpSocket.SendToAsync(e);
                     }
                     else {
 #if DEBUG
@@ -200,7 +200,7 @@ namespace KCP.Server {
                         m_UdpServer.SendTo(e.Buffer, e.Offset, e.BytesTransferred, SocketFlags.None, e.RemoteEndPoint);
                         Console.WriteLine((sw.ElapsedTicks * 1000f / Stopwatch.Frequency));
 #else
-                        m_UdpServer.SendTo(e.Buffer, e.Offset, e.BytesTransferred, SocketFlags.None, e.RemoteEndPoint);
+                        m_UdpSocket.SendTo(e.Buffer, e.Offset, e.BytesTransferred, SocketFlags.None, e.RemoteEndPoint);
 
 #endif
                         PushSAE(e);
@@ -247,10 +247,10 @@ namespace KCP.Server {
                 e.RemoteEndPoint = session.EndPoint;
                 Array.Copy(data, offset, e.Buffer, 0, size);
                 e.SetBuffer(0, size);
-                m_UdpServer.SendToAsync(e);
+                m_UdpSocket.SendToAsync(e);
             }
             else {
-                m_UdpServer.SendTo(data, offset, size, SocketFlags.None, session.EndPoint);
+                m_UdpSocket.SendTo(data, offset, size, SocketFlags.None, session.EndPoint);
             }
 #if DEV
             IRQLog.AppLog.Log(session.NetIndex.ToString() + ",发送数据KCP");
@@ -378,7 +378,7 @@ namespace KCP.Server {
         public int Key;
         public EndPoint @EndPoint;
         public ClientSessionDisposeReason DisposeReason = ClientSessionDisposeReason.None;
-        internal KCPServer m_UdpServer;
+        internal KCPServer m_KCPServer;
         /// <summary>
         /// 最后收到数据的时刻。
         /// 当超过UdpLibConfig.MaxTimeNoData时间没有收到客户端的数据，则可以认为是死链接
@@ -394,7 +394,7 @@ namespace KCP.Server {
 
         void init_kcp(UInt32 conv) {
             m_Kcp = new KCPLib(conv, (byte[] buf, int size) => {
-                m_UdpServer.Send(this, buf, 0, size);
+                m_KCPServer.Send(this, buf, 0, size);
             });
 
             // fast mode.
@@ -413,10 +413,10 @@ namespace KCP.Server {
         /// 和Update同一个线程调用
         /// </summary>
         public void Send(string str) {
-            byte[] buf = this.m_UdpServer.BytePool.Rent(32 * 1024);
+            byte[] buf = this.m_KCPServer.BytePool.Rent(32 * 1024);
             int bytes = System.Text.ASCIIEncoding.ASCII.GetBytes(str, 0, str.Length, buf, 0);
             Send(buf, 0, bytes);
-            this.m_UdpServer.BytePool.Return(buf, false);
+            this.m_KCPServer.BytePool.Return(buf, false);
         }
 
         private void Send(byte[] buf, int offset, int bytes) {
@@ -426,7 +426,7 @@ namespace KCP.Server {
 
         public void Update() {
             update(KCPServer.iclock());
-            if(m_UdpServer.m_watch.Elapsed - m_LastRecvTimestamp > UdpLibConfig.MaxTimeNoData) {
+            if(m_KCPServer.m_watch.Elapsed - m_LastRecvTimestamp > UdpLibConfig.MaxTimeNoData) {
                 DisposeReason = ClientSessionDisposeReason.MaxTimeNoData;
                 Dispose();
             }
@@ -449,19 +449,19 @@ namespace KCP.Server {
 
             for(var size = m_Kcp.PeekSize(); size > 0; size = m_Kcp.PeekSize()) {
                 byte[] buffer;
-                buffer = (UdpLibConfig.UseBytePool ? m_UdpServer.BytePool.Rent(size) : new byte[size]);
+                buffer = (UdpLibConfig.UseBytePool ? m_KCPServer.BytePool.Rent(size) : new byte[size]);
                 try {
 
                     if(m_Kcp.Recv(buffer) > 0) {
-                        m_LastRecvTimestamp = m_UdpServer.m_watch.Elapsed;
+                        m_LastRecvTimestamp = m_KCPServer.m_watch.Elapsed;
 
                         uint key = 0;
                         KCPLib.ikcp_decode32u(buffer, 0, ref key);
-                        if(m_UdpServer.IsClientKeyCorrect(this.m_netIndex, (int)key) == false) {
+                        if(m_KCPServer.IsClientKeyCorrect(this.m_netIndex, (int)key) == false) {
 #if DEBUG
                             Console.WriteLine("index:{0} key 不对", this.m_netIndex);
 #endif
-                            m_UdpServer.BytePool.Return(buffer, true);
+                            m_KCPServer.BytePool.Return(buffer, true);
                             DisposeReason = ClientSessionDisposeReason.IndexKeyError;
                             //key不对
                             Dispose();
@@ -470,12 +470,12 @@ namespace KCP.Server {
 #if DEV
                     IRQLog.AppLog.Log(this.m_netIndex.ToString() + ",接收2");
 #endif
-                        m_UdpServer.OnRecvData(this, buffer, 0, size);
+                        m_KCPServer.OnRecvData(this, buffer, 0, size);
                     }
                 }
                 finally {
                     if(UdpLibConfig.UseBytePool) {
-                        m_UdpServer.BytePool.Return(buffer, true);
+                        m_KCPServer.BytePool.Return(buffer, true);
                     }
                 }
             }
@@ -487,7 +487,7 @@ namespace KCP.Server {
                 return;
             }
             m_Disposed = true;
-            m_UdpServer.AddToDisposedQueue(this);
+            m_KCPServer.AddToDisposedQueue(this);
         }
 
 
