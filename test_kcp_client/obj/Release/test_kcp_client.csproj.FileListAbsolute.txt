@@ -1,0 +1,8 @@
+C:\work\test_kcp\test_kcp_client\bin\Release\test_kcp_client.exe.config
+C:\work\test_kcp\test_kcp_client\bin\Release\test_kcp_client.exe
+C:\work\test_kcp\test_kcp_client\bin\Release\test_kcp_client.pdb
+C:\work\test_kcp\test_kcp_client\bin\Release\KCP.exe
+C:\work\test_kcp\test_kcp_client\obj\Release\test_kcp_client.csprojResolveAssemblyReference.cache
+C:\work\test_kcp\test_kcp_client\obj\Release\test_kcp_client.exe
+C:\work\test_kcp\test_kcp_client\obj\Release\test_kcp_client.pdb
+C:\work\test_kcp\test_kcp_client\bin\Release\KCP.pdb
