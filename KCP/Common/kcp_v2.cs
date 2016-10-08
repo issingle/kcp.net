@@ -1170,7 +1170,9 @@ namespace KCP.Common {
             m_SegPool.Clear();
 
             if(BufferFree != null) {
-                BufferFree(this.m_ackList);
+                if(m_ackList != null) {
+                    BufferFree(this.m_ackList);
+                }
                 BufferFree(this.buffer);
             }
         }
