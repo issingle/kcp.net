@@ -197,7 +197,7 @@ namespace KCP.Server {
                     else {
 #if DEBUG
                         Stopwatch sw = Stopwatch.StartNew();
-                        m_UdpServer.SendTo(e.Buffer, e.Offset, e.BytesTransferred, SocketFlags.None, e.RemoteEndPoint);
+                        m_UdpSocket.SendTo(e.Buffer, e.Offset, e.BytesTransferred, SocketFlags.None, e.RemoteEndPoint);
                         Console.WriteLine((sw.ElapsedTicks * 1000f / Stopwatch.Frequency));
 #else
                         m_UdpSocket.SendTo(e.Buffer, e.Offset, e.BytesTransferred, SocketFlags.None, e.RemoteEndPoint);

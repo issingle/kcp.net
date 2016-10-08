@@ -29,7 +29,9 @@ namespace test_kcp_client {
             IRQLog.AppLog.Start("output.csv");
             UdpLibConfig.HandshakeDelay = 2000;
             UdpLibConfig.HandshakeRetry = 10;
-
+            //客户端，没必要启用内存池
+            //如果需要启用，则ByteArrayPool.cs中的条件编译“SERVERSIDE"需启用
+            UdpLibConfig.UseBytePool = false;
             ArrayPool<byte> BytePool;
             if(UdpLibConfig.UseBytePool) {
                 BytePool = ArrayPool<byte>.Create(8 * 1024, 50);

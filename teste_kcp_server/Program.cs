@@ -12,10 +12,10 @@ class Program {
         if(s == "") {
             s = "127.0.0.1";
         }
-        Console.WriteLine("异步发送模式？(1:异步 其他:同步)");
-        if(Console.ReadLine() == "1") {
-            UdpLibConfig.ServerSendAsync = true;
-        }
+        //Console.WriteLine("异步发送模式？(1:异步 其他:同步)");
+        //if(Console.ReadLine() == "1") {
+        //    UdpLibConfig.ServerSendAsync = true;
+        //}
         Console.WriteLine("开始");
         IRQLog.AppLog = new IRQLog();
         IRQLog.AppLog.Start("output.csv");

@@ -22,3 +22,11 @@ C:\work\test_kcp\test_kcp_client\bin\Debug\KCP.pdb
 C:\work\test_kcp\test_kcp_client\obj\Debug\test_kcp_client.csprojResolveAssemblyReference.cache
 C:\work\test_kcp\test_kcp_client\obj\Debug\test_kcp_client.exe
 C:\work\test_kcp\test_kcp_client\obj\Debug\test_kcp_client.pdb
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\bin\Debug\test_kcp_client.exe.config
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\bin\Debug\test_kcp_client.exe
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\bin\Debug\test_kcp_client.pdb
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\bin\Debug\KCP.dll
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\bin\Debug\KCP.pdb
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\obj\Debug\test_kcp_client.csprojResolveAssemblyReference.cache
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\obj\Debug\test_kcp_client.exe
+C:\Users\czj\Documents\GitHub\kcp.net\test_kcp_client\obj\Debug\test_kcp_client.pdb
